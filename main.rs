@@ -1,46 +1,47 @@
-//yahloo
+//yahlo0
 use reqwest;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
-struct RedditResponse {
-    data: RedditData,
+#[derive(Deserialize)]
+struct ApiResponse {
+    data: Listing,
 }
 
-#[derive(Debug, Deserialize)]
-struct RedditData {
-    children: Vec<RedditPost>,
+#[derive(Deserialize)]
+struct Listing {
+    children: Vec<Post>,
 }
 
-#[derive(Debug, Deserialize)]
-struct RedditPost {
-    data: PostData,
+#[derive(Deserialize)]
+struct Post {
+    data: PostDetails,
 }
 
-#[derive(Debug, Deserialize)]
-struct PostData {
+#[derive(Deserialize)]
+struct PostDetails {
     title: String,
     url: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let subreddit = "news"; // You can change this to any subreddit
-    let url = format!("https://www.reddit.com/r/{}/top.json?limit=10", subreddit);
+    let subreddit = "news";
+    let api = format!("https://www.reddit.com/r/{}/top.json?limit=10", subreddit);
 
-    let res = reqwest::Client::new()
-        .get(&url)
-        .header("User-Agent", "RustRedditScraper/1.0")
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(api)
+        .header("User-Agent", "rust-scraper/0.1")
         .send()
         .await?
-        .json::<RedditResponse>()
+        .json::<ApiResponse>()
         .await?;
 
     println!("\nTop posts from r/{}:\n", subreddit);
 
-    for (i, post) in res.data.children.iter().enumerate() {
+    for (i, post) in resp.data.children.iter().enumerate() {
         println!("{}. {}", i + 1, post.data.title);
-        println!("   🔗 {}", post.data.url);
+        println!("   {}", post.data.url);
     }
 
     Ok(())
